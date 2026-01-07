@@ -71,10 +71,10 @@ interface SummaryMetrics {
   growthRate: number;
 }
 
-interface CustomTooltipProps extends TooltipProps<number, string> {
+export interface CustomTooltipProps<T> extends TooltipProps<number, string> {
   active?: boolean;
   payload?: Array<{
-    payload: ChartDataPoint;
+    payload: T;
   }>;
   label?: string;
 }
@@ -84,7 +84,7 @@ type ChartType = "area" | "line" | "bar" | "composed";
 type ViewMode = "daily" | "hourly";
 
 const TransactionVolumeChart: React.FC = () => {
-  const [timeRange, setTimeRange] = useState<TimeRange>("7d");
+  const [timeRange, setTimeRange] = useState<TimeRange>("90d");
   const [chartType, setChartType] = useState<ChartType>("area");
   const [viewMode, setViewMode] = useState<ViewMode>("daily");
   const [selectedService, setSelectedService] = useState<string>("all");
@@ -302,7 +302,7 @@ const TransactionVolumeChart: React.FC = () => {
           timeRange,
           selectedService
         );
-        const rawData: ChartDataPoint[] = await response.json();
+        const rawData: ChartDataPoint[] = response;
 
         // Set the data directly to state
         setChartData(rawData);
@@ -317,7 +317,7 @@ const TransactionVolumeChart: React.FC = () => {
     fetchData();
   }, [timeRange, selectedService]);
 
-  const CustomTooltip: React.FC<CustomTooltipProps> = ({
+  const CustomTooltip: React.FC<CustomTooltipProps<ChartDataPoint>> = ({
     active,
     payload,
     label,
@@ -336,7 +336,7 @@ const TransactionVolumeChart: React.FC = () => {
                 Total:
               </span>
               <span className="font-bold text-xl bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                {data.total.toLocaleString()}
+                {data.total?.toLocaleString()}
               </span>
             </div>
 
@@ -347,7 +347,7 @@ const TransactionVolumeChart: React.FC = () => {
                   Electricity:
                 </span>
                 <span className="text-xs font-semibold text-gray-900 dark:text-white ml-auto">
-                  {data.electricity.toLocaleString()}
+                  {data.electricity?.toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -356,7 +356,7 @@ const TransactionVolumeChart: React.FC = () => {
                   Mobile:
                 </span>
                 <span className="text-xs font-semibold text-gray-900 dark:text-white ml-auto">
-                  {data.mobileMoney.toLocaleString()}
+                  {data.mobileMoney?.toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -365,7 +365,7 @@ const TransactionVolumeChart: React.FC = () => {
                   Airtime:
                 </span>
                 <span className="text-xs font-semibold text-gray-900 dark:text-white ml-auto">
-                  {data.airtime.toLocaleString()}
+                  {data.airtime?.toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -374,7 +374,7 @@ const TransactionVolumeChart: React.FC = () => {
                   Water:
                 </span>
                 <span className="text-xs font-semibold text-gray-900 dark:text-white ml-auto">
-                  {data.water.toLocaleString()}
+                  {data.water?.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -392,7 +392,7 @@ const TransactionVolumeChart: React.FC = () => {
                     />
                   </div>
                   <span className="text-xs font-bold text-green-600 dark:text-green-400">
-                    {data.successRate.toFixed(1)}%
+                    {data.successRate?.toFixed(1)}%
                   </span>
                 </div>
               </div>
@@ -401,7 +401,7 @@ const TransactionVolumeChart: React.FC = () => {
                   Revenue
                 </span>
                 <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">
-                  ZMW {data.revenue.toFixed(0)}
+                  ZMW {data.revenue?.toFixed(0)}
                 </p>
               </div>
             </div>
