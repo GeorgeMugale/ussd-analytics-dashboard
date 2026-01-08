@@ -123,7 +123,7 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
   const { isCollapsed, setIsCollapsed } = useDashboard();
   const [isHovered, setIsHovered] = useState(false);
 
-  // If sidebar is collapsed, we handle interaction differently
+  // If sidebar is collapsed, handle interaction differently
   const handleToggle = () => {
     // If collapsed and user clicks a section, they probably want to see the menu.
     // Option A: Just expand the accordion (icons drop down)

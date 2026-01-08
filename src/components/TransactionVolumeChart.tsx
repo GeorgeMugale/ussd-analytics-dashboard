@@ -22,14 +22,10 @@ import {
   TrendingUp,
   TrendingDown,
   BarChart3,
-  Calendar,
-  Filter,
   Download,
-  RefreshCw,
   Zap,
   Activity,
   DollarSign,
-  Users,
 } from "lucide-react";
 import { api } from "../services/api";
 
@@ -326,13 +322,13 @@ const TransactionVolumeChart: React.FC = () => {
       const data = payload[0].payload as ChartDataPoint;
 
       return (
-        <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 p-4 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
-          <p className="font-bold text-gray-900 dark:text-white text-base mb-3">
+        <div className="bg-gradient-to-br from-white to-gray-50   p-4 rounded-xl shadow-2xl border border-gray-200  backdrop-blur-sm">
+          <p className="font-bold text-gray-900  text-base mb-3">
             {label}
           </p>
           <div className="space-y-2">
-            <div className="flex justify-between items-center gap-8 pb-2 border-b border-gray-200 dark:border-gray-700">
-              <span className="text-gray-600 dark:text-gray-300 font-medium">
+            <div className="flex justify-between items-center gap-8 pb-2 border-b border-gray-200 ">
+              <span className="text-gray-600 font-medium">
                 Total:
               </span>
               <span className="font-bold text-xl bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
@@ -343,64 +339,64 @@ const TransactionVolumeChart: React.FC = () => {
             <div className="grid grid-cols-2 gap-2 py-2">
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                <span className="text-xs text-gray-600 dark:text-gray-400">
+                <span className="text-xs text-gray-600 ">
                   Electricity:
                 </span>
-                <span className="text-xs font-semibold text-gray-900 dark:text-white ml-auto">
+                <span className="text-xs font-semibold text-gray-900  ml-auto">
                   {data.electricity?.toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
-                <span className="text-xs text-gray-600 dark:text-gray-400">
+                <span className="text-xs text-gray-600 ">
                   Mobile:
                 </span>
-                <span className="text-xs font-semibold text-gray-900 dark:text-white ml-auto">
+                <span className="text-xs font-semibold text-gray-900  ml-auto">
                   {data.mobileMoney?.toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />
-                <span className="text-xs text-gray-600 dark:text-gray-400">
+                <span className="text-xs text-gray-600 ">
                   Airtime:
                 </span>
-                <span className="text-xs font-semibold text-gray-900 dark:text-white ml-auto">
+                <span className="text-xs font-semibold text-gray-900  ml-auto">
                   {data.airtime?.toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
-                <span className="text-xs text-gray-600 dark:text-gray-400">
+                <span className="text-xs text-gray-600 ">
                   Water:
                 </span>
-                <span className="text-xs font-semibold text-gray-900 dark:text-white ml-auto">
+                <span className="text-xs font-semibold text-gray-900  ml-auto">
                   {data.water?.toLocaleString()}
                 </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-200 ">
               <div>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-gray-500 ">
                   Success Rate
                 </span>
                 <div className="flex items-center gap-1 mt-1">
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                  <div className="w-full bg-gray-200  rounded-full h-1.5">
                     <div
                       className="bg-gradient-to-r from-green-500 to-emerald-500 h-1.5 rounded-full"
                       style={{ width: `${data.successRate}%` }}
                     />
                   </div>
-                  <span className="text-xs font-bold text-green-600 dark:text-green-400">
+                  <span className="text-xs font-bold text-green-600 ">
                     {data.successRate?.toFixed(1)}%
                   </span>
                 </div>
               </div>
               <div>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-gray-500 ">
                   Revenue
                 </span>
-                <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">
+                <p className="text-sm font-bold text-gray-900  mt-1">
                   ZMW {data.revenue?.toFixed(0)}
                 </p>
               </div>
@@ -677,10 +673,10 @@ const TransactionVolumeChart: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100   p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
+        <div className="bg-white  rounded-2xl shadow-xl p-6 border border-gray-200 ">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
@@ -691,7 +687,7 @@ const TransactionVolumeChart: React.FC = () => {
                   Transaction Analytics
                 </h1>
               </div>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600 ">
                 Real-time USSD transaction monitoring and insights
               </p>
             </div>
@@ -700,7 +696,7 @@ const TransactionVolumeChart: React.FC = () => {
               <select
                 value={timeRange}
                 onChange={(e) => setTimeRange(e.target.value as TimeRange)}
-                className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:text-white transition-all"
+                className="bg-gray-50  border border-gray-300  rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500  transition-all"
               >
                 <option value="24h">Last 24 Hours</option>
                 <option value="7d">Last 7 Days</option>
@@ -711,7 +707,7 @@ const TransactionVolumeChart: React.FC = () => {
               <select
                 value={chartType}
                 onChange={(e) => setChartType(e.target.value as ChartType)}
-                className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:text-white transition-all"
+                className="bg-gray-50  border border-gray-300  rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500  transition-all"
               >
                 <option value="area">Area Chart</option>
                 <option value="line">Line Chart</option>
@@ -818,16 +814,16 @@ const TransactionVolumeChart: React.FC = () => {
         </div>
 
         {/* Main Chart */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
+        <div className="bg-white  rounded-2xl shadow-xl p-6 border border-gray-200 ">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-bold text-gray-900 ">
               Transaction Volume Trends
             </h2>
 
             <select
               value={selectedService}
               onChange={(e) => setSelectedService(e.target.value)}
-              className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:text-white"
+              className="bg-gray-50  border border-gray-300  rounded-xl px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500 "
             >
               {ussdServices.map((service) => (
                 <option key={service.value} value={service.value}>
@@ -846,41 +842,41 @@ const TransactionVolumeChart: React.FC = () => {
 
         {/* Insights */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
-            <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <div className="bg-white  rounded-2xl shadow-xl p-6 border border-gray-200 ">
+            <h3 className="font-bold text-gray-900  mb-4 flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-purple-600" />
               Key Insights
             </h3>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex items-center justify-between p-3 bg-gray-50 /50 rounded-xl">
+                <span className="text-sm text-gray-600 ">
                   Peak Period
                 </span>
-                <span className="font-bold text-gray-900 dark:text-white">
+                <span className="font-bold text-gray-900 ">
                   {summaryMetrics.peakDay.date}
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex items-center justify-between p-3 bg-gray-50 /50 rounded-xl">
+                <span className="text-sm text-gray-600 ">
                   Peak Volume
                 </span>
-                <span className="font-bold text-gray-900 dark:text-white">
+                <span className="font-bold text-gray-900 ">
                   {formatYAxis(summaryMetrics.peakDay.value)}
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex items-center justify-between p-3 bg-gray-50 /50 rounded-xl">
+                <span className="text-sm text-gray-600 ">
                   Daily Average
                 </span>
-                <span className="font-bold text-gray-900 dark:text-white">
+                <span className="font-bold text-gray-900 ">
                   {formatYAxis(summaryMetrics.avgTransactions)}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
-            <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <div className="bg-white  rounded-2xl shadow-xl p-6 border border-gray-200 ">
+            <h3 className="font-bold text-gray-900  mb-4 flex items-center gap-2">
               <Activity className="w-5 h-5 text-blue-600" />
               Service Distribution
             </h3>
@@ -896,14 +892,14 @@ const TransactionVolumeChart: React.FC = () => {
                 return (
                   <div key={service.value}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <span className="text-sm font-medium text-gray-700">
                         {service.label}
                       </span>
-                      <span className="text-sm font-bold text-gray-900 dark:text-white">
+                      <span className="text-sm font-bold text-gray-900 ">
                         {percentage.toFixed(1)}%
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div className="w-full bg-gray-200  rounded-full h-2">
                       <div
                         className="h-2 rounded-full transition-all duration-500"
                         style={{

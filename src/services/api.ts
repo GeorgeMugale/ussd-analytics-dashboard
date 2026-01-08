@@ -29,7 +29,7 @@ async function request(path: string, options: any = {}) {
 export const api = {
   getTransactionVolume: (range: TimeRange, service: string) =>
     request(`/transactions/volume/${range}/${service}`),
-  getSuccessRate: () => request("/transactions/success-rate"),
+  getSuccessRate: (selectedPeriod: "24h" | "7d" | "30d") => request(`/transactions/success-rate/${selectedPeriod}`),
   getPeakHours: () => request("/peak-hours"),
   getDemographics: () => request("/users/demographics"),
   getRevenueTrends: () => request("/revenue/trends"),

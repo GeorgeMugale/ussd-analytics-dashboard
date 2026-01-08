@@ -189,9 +189,9 @@ const USSDRevenueTrends: React.FC = () => {
       const data = payload[0].payload as RevenueDataPoint;
 
       return (
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700">
+        <div className="bg-white  p-4 rounded-xl shadow-2xl border border-gray-200 ">
           <div className="flex items-center justify-between mb-3">
-            <p className="font-bold text-gray-900 dark:text-white">{label}</p>
+            <p className="font-bold text-gray-900 ">{label}</p>
             {data.isPeak && (
               <span className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-full font-medium">
                 Peak Week
@@ -210,11 +210,11 @@ const USSDRevenueTrends: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            <div className="flex justify-between items-center pb-2 border-b border-gray-200 dark:border-gray-700">
-              <span className="text-gray-600 dark:text-gray-400 font-medium">
+            <div className="flex justify-between items-center pb-2 border-b border-gray-200 ">
+              <span className="text-gray-600 font-medium">
                 Total Revenue:
               </span>
-              <span className="font-bold text-lg text-gray-900 dark:text-white">
+              <span className="font-bold text-lg text-gray-900 ">
                 ZMW {data.total.toLocaleString()}
               </span>
             </div>
@@ -226,18 +226,18 @@ const USSDRevenueTrends: React.FC = () => {
                     className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: entry.color }}
                   />
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                  <span className="text-sm text-gray-600 ">
                     {entry.name}:
                   </span>
                 </div>
-                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                <span className="text-sm font-semibold text-gray-900 ">
                   ZMW {entry.value.toLocaleString()}
                 </span>
               </div>
             ))}
 
             {data.growth !== undefined && (
-              <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between pt-2 border-t border-gray-200 ">
                 <span className="text-xs text-gray-500">Day-over-day:</span>
                 <span
                   className={`text-xs font-bold flex items-center gap-1 ${
@@ -505,9 +505,9 @@ const USSDRevenueTrends: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50   p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
+        <div className="bg-white  rounded-2xl shadow-xl p-6 border border-gray-200 ">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
@@ -518,35 +518,35 @@ const USSDRevenueTrends: React.FC = () => {
                   Revenue Trends Dashboard
                 </h1>
               </div>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600 ">
                 Daily revenue from USSD transactions across Zambian networks
                 (ZMW)
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl font-medium">
+              <div className="flex items-center gap-2 px-4 py-2 bg-green-100  text-green-700  rounded-xl font-medium">
                 <TrendingUp className="w-4 h-4" />+{overallTrend.toFixed(1)}%
                 growth
               </div>
-              <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors">
-                <RefreshCw className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <button className="p-2 hover:bg-gray-100  rounded-xl transition-colors">
+                <RefreshCw className="w-5 h-5 text-gray-600 " />
               </button>
-              <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors">
-                <Download className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <button className="p-2 hover:bg-gray-100  rounded-xl transition-colors">
+                <Download className="w-5 h-5 text-gray-600 " />
               </button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
-              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50   p-4 rounded-xl border border-blue-200 ">
+              <div className="text-sm text-gray-600  mb-1">
                 Total Revenue
               </div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white">
+              <div className="text-3xl font-bold text-gray-900 ">
                 ZMW {formatYAxis(totalRevenue)}
               </div>
-              <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+              <div className="text-xs text-blue-600  mt-1">
                 Last{" "}
                 {timeRange === "7d"
                   ? "7 days"
@@ -558,39 +558,39 @@ const USSDRevenueTrends: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-4 rounded-xl border border-green-200 dark:border-green-800">
-              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50   p-4 rounded-xl border border-green-200 ">
+              <div className="text-sm text-gray-600  mb-1">
                 Avg. Daily
               </div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white">
+              <div className="text-3xl font-bold text-gray-900 ">
                 ZMW {avgDailyRevenue.toLocaleString()}
               </div>
-              <div className="text-xs text-green-600 dark:text-green-400 mt-1">
+              <div className="text-xs text-green-600  mt-1">
                 Consistent growth trend
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-4 rounded-xl border border-purple-200 dark:border-purple-800">
-              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50   rounded-xl border border-purple-200 ">
+              <div className="text-sm text-gray-600  mb-1">
                 Peak Day
               </div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white">
+              <div className="text-3xl font-bold text-gray-900 ">
                 ZMW {peakDay.total.toLocaleString()}
               </div>
-              <div className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+              <div className="text-xs text-purple-600  mt-1">
                 {peakDay.dateLabel} (Salary week)
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
+        <div className="bg-white  rounded-2xl shadow-xl p-6 border border-gray-200 ">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+              <h2 className="text-2xl font-bold text-gray-900  mb-1">
                 Daily Revenue Trends
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-gray-600 ">
                 Revenue breakdown by service type
               </p>
             </div>
@@ -599,7 +599,7 @@ const USSDRevenueTrends: React.FC = () => {
               <select
                 value={timeRange}
                 onChange={(e) => setTimeRange(e.target.value as TimeRange)}
-                className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 dark:text-white"
+                className="bg-gray-50  border border-gray-300  rounded-xl px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 "
               >
                 <option value="7d">Last 7 Days</option>
                 <option value="30d">Last 30 Days</option>
@@ -610,7 +610,7 @@ const USSDRevenueTrends: React.FC = () => {
               <select
                 value={chartType}
                 onChange={(e) => setChartType(e.target.value as ChartType)}
-                className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 dark:text-white"
+                className="bg-gray-50  border border-gray-300  rounded-xl px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 "
               >
                 <option value="stacked">Stacked Bar</option>
                 <option value="grouped">Grouped Bar</option>
@@ -627,8 +627,8 @@ const USSDRevenueTrends: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+        <div className="bg-white  rounded-2xl shadow-xl p-6 border border-gray-200 ">
+          <h2 className="text-xl font-bold text-gray-900  mb-6 flex items-center gap-2">
             <Activity className="w-5 h-5 text-blue-600" />
             Revenue by Service Type
           </h2>
@@ -639,7 +639,7 @@ const USSDRevenueTrends: React.FC = () => {
               return (
                 <div
                   key={index}
-                  className="relative overflow-hidden bg-gradient-to-br from-gray-50 to-white dark:from-gray-700 dark:to-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-600 hover:shadow-lg transition-all duration-300"
+                  className="relative overflow-hidden bg-gradient-to-br from-gray-50 to-white   p-6 rounded-xl border border-gray-200  hover:shadow-lg transition-all duration-300"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div
@@ -666,16 +666,16 @@ const USSDRevenueTrends: React.FC = () => {
                     </div>
                   </div>
 
-                  <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                  <h3 className="text-sm font-medium text-gray-600  mb-2">
                     {service.name}
                   </h3>
 
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  <div className="text-2xl font-bold text-gray-900  mb-2">
                     ZMW {formatYAxis(service.value)}
                   </div>
 
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500 dark:text-gray-400">
+                    <span className="text-gray-500 ">
                       Share:
                     </span>
                     <span
@@ -686,7 +686,7 @@ const USSDRevenueTrends: React.FC = () => {
                     </span>
                   </div>
 
-                  <div className="mt-3 w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                  <div className="mt-3 w-full bg-gray-200  rounded-full h-2">
                     <div
                       className="h-2 rounded-full transition-all duration-500"
                       style={{
@@ -701,53 +701,53 @@ const USSDRevenueTrends: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+        <div className="bg-white  rounded-2xl shadow-xl p-6 border border-gray-200 ">
+          <h2 className="text-xl font-bold text-gray-900  mb-6 flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-purple-600" />
             Revenue Insights
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 p-5 rounded-xl border border-blue-200 dark:border-blue-800">
+            <div className="bg-gradient-to-br from-blue-50 to-cyan-50   p-5 rounded-xl border border-blue-200 ">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
                   <Zap className="w-5 h-5 text-white" />
                 </div>
-                <div className="text-lg font-bold text-gray-900 dark:text-white">
+                <div className="text-lg font-bold text-gray-900 ">
                   Electricity Dominance
                 </div>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-gray-600 ">
                 Highest revenue contributor at 45%, peaks during salary weeks
                 (15th-20th). Urban areas show 60% higher usage.
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-5 rounded-xl border border-green-200 dark:border-green-800">
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50   p-5 rounded-xl border border-green-200 ">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
                   <Wallet className="w-5 h-5 text-white" />
                 </div>
-                <div className="text-lg font-bold text-gray-900 dark:text-white">
+                <div className="text-lg font-bold text-gray-900 ">
                   Mobile Money Growth
                 </div>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-gray-600 ">
                 Steady 12.3% growth trend. Highest adoption in Lusaka (48%) and
                 Copperbelt (35%). Weekend usage increased 20%.
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-5 rounded-xl border border-purple-200 dark:border-purple-800">
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50   p-5 rounded-xl border border-purple-200 ">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center">
                   <Signal className="w-5 h-5 text-white" />
                 </div>
-                <div className="text-lg font-bold text-gray-900 dark:text-white">
+                <div className="text-lg font-bold text-gray-900 ">
                   Network Performance
                 </div>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-gray-600 ">
                 MTN leads with 48% revenue share, followed by Airtel at 42% and
                 Zamtel at 10%. Strong urban penetration.
               </p>
@@ -755,7 +755,7 @@ const USSDRevenueTrends: React.FC = () => {
           </div>
         </div>
 
-        <div className="text-center text-gray-500 dark:text-gray-400 text-sm space-y-1 pb-4">
+        <div className="text-center text-gray-500  text-sm space-y-1 pb-4">
           <p>USSD Revenue Analytics Dashboard for Zambian Telecommunications</p>
           <p className="text-xs">
             Peak revenue observed during salary weeks • Electricity tokens
