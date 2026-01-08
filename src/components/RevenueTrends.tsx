@@ -29,19 +29,20 @@ import {
   Signal,
 } from "lucide-react";
 import { CustomTooltipProps } from "./TransactionVolumeChart";
+import { api } from "../services/api";
 
 interface RevenueDataPoint {
-  date: string;
-  dateLabel: string;
+  date: string;       // ISO String from backend
+  dateLabel: string;  // Generated in Frontend
   electricity: number;
   mobileMoney: number;
   airtime: number;
   water: number;
   total: number;
-  isPeak: boolean;
-  isHoliday: boolean;
+  isPeak: boolean;    // Calculated in Frontend
+  isHoliday: boolean; // Calculated in Frontend
   isProjected: boolean;
-  growth?: number;
+  growth?: number;    // Calculated in Frontend
 }
 
 interface ServiceRevenue {
@@ -63,72 +64,67 @@ const USSDRevenueTrends: React.FC = () => {
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
   const [chartType, setChartType] = useState<ChartType>("stacked");
   const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([]);
+  const [loading, setLoading] = useState(false); // Add loading state if desired
 
-  const generateRevenueData = (): RevenueDataPoint[] => {
-    const data: RevenueDataPoint[] = [];
-    const now = new Date();
-    const days =
-      timeRange === "7d"
-        ? 7
-        : timeRange === "30d"
-        ? 30
-        : timeRange === "90d"
-        ? 90
-        : 365;
+  // Helper to detect specific business days (Moved from generate function)
+  const enhanceDataPoint = (data: any, prevTotal: number) => {
+    const dateObj = new Date(data.date);
+    const dayOfMonth = dateObj.getDate();
+    const month = dateObj.getMonth();
 
-    for (let i = days; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
+    // Logic: Peak is 15th-20th (Salary week)
+    const isPeak = dayOfMonth >= 15 && dayOfMonth <= 20;
 
-      const dayOfWeek = date.getDay();
-      const dayOfMonth = date.getDate();
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-      const isPeak = dayOfMonth >= 15 && dayOfMonth <= 20;
-      const isHoliday =
-        (date.getMonth() === 11 && dayOfMonth >= 25 && dayOfMonth <= 31) ||
-        (date.getMonth() === 0 && dayOfMonth === 1);
+    // Logic: Holidays (Xmas or New Year)
+    const isHoliday =
+      (month === 11 && dayOfMonth >= 25 && dayOfMonth <= 31) ||
+      (month === 0 && dayOfMonth === 1);
 
-      let baseRevenue = 40000;
+    // Logic: Growth % vs previous day
+    const growth = prevTotal > 0 
+      ? ((data.total - prevTotal) / prevTotal) * 100 
+      : 0;
 
-      if (isPeak) baseRevenue *= 1.35;
-      if (isWeekend && !isPeak) baseRevenue *= 0.85;
-      if (isHoliday) baseRevenue *= 0.75;
-
-      const growthFactor = 1 + ((days - i) / days) * 0.12;
-      baseRevenue *= growthFactor;
-      baseRevenue += (Math.random() - 0.5) * baseRevenue * 0.15;
-
-      const electricity = baseRevenue * 0.45;
-      const mobileMoney = baseRevenue * 0.3;
-      const airtime = baseRevenue * 0.15;
-      const water = baseRevenue * 0.1;
-
-      const prevTotal = data[data.length - 1]?.total || baseRevenue;
-      const growth = ((baseRevenue - prevTotal) / prevTotal) * 100;
-
-      data.push({
-        date: date.toISOString().split("T")[0],
-        dateLabel: date.toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        }),
-        electricity: Math.round(electricity),
-        mobileMoney: Math.round(mobileMoney),
-        airtime: Math.round(airtime),
-        water: Math.round(water),
-        total: Math.round(baseRevenue),
-        isPeak,
-        isHoliday,
-        isProjected: i === 0,
-        growth: Math.round(growth * 10) / 10,
-      });
-    }
-
-    return data;
+    return {
+      ...data,
+      dateLabel: dateObj.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
+      isPeak,
+      isHoliday,
+      isProjected: false, // You can set this to true if date === today
+      growth: Math.round(growth * 10) / 10,
+    };
   };
 
-  useEffect(() => {
-    setRevenueData(generateRevenueData());
+
+ useEffect(() => {
+    const fetchRevenueData = async () => {
+      setLoading(true);
+      try {
+        const result = await api.getRevenueTrends(timeRange);
+		
+		if (result){
+
+        // Process the raw data to add UI flags (Growth, Peak, etc.)
+        const processedData: RevenueDataPoint[] = result.map((item: any, index: number) => {
+          const prevTotal = index > 0 ? result[index - 1].total : item.total;
+          return enhanceDataPoint(item, prevTotal);
+        });
+
+        setRevenueData(processedData);
+		}else{
+			alert("Error fetching");
+		}
+      } catch (error) {
+        console.error("Failed to fetch revenue data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRevenueData();
   }, [timeRange]);
 
   const totalRevenue = revenueData.reduce((sum, d) => sum + d.total, 0);

@@ -1,11 +1,12 @@
 import Dashboard, { DashboardItem } from "../components/DashboardLayout";
-import USSDGaugeDashboard from "../components/SuccessRateGauge";
+import USSDRevenueTrends from "../components/RevenueTrends";
+import USSDGauge from "../components/SuccessRateGauge";
 import TransactionVolumeChart from "../components/TransactionVolumeChart";
 
 const AnalyticsPage = () => {
   return (
     <>
-      <Dashboard title="Analytics" defaultActiveId="ussd-gauge">
+      <Dashboard title="Analytics" defaultActiveId="ussd-revenue">
         <DashboardItem
           icon={<></>}
           id="transaction-volume"
@@ -20,7 +21,16 @@ const AnalyticsPage = () => {
           title="Success Rate Gauge"
           description="shows Success Rate Gauge"
         >
-          <USSDGaugeDashboard />
+          <USSDGauge />
+        </DashboardItem>
+
+        <DashboardItem
+          icon={<></>}
+          id="ussd-revenue"
+          title="USSD Revenue Trends"
+          description="shows USSD Revenue Trends"
+        >
+          <USSDRevenueTrends />
         </DashboardItem>
       </Dashboard>
     </>

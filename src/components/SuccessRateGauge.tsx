@@ -57,7 +57,7 @@ export interface GaugeApiResponse {
   }[];
 }
 
-const USSDGaugeDashboard: React.FC = () => {
+const USSDGauge: React.FC = () => {
   const [metrics, setMetrics] = useState<MetricData>({
     successRate: 0,
     successfulTxns: 0,
@@ -592,4 +592,4 @@ const USSDGaugeDashboard: React.FC = () => {
   );
 };
 
-export default USSDGaugeDashboard;
+export default USSDGauge;
