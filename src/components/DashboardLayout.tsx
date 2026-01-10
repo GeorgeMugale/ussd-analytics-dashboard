@@ -350,7 +350,6 @@ export default function Dashboard({
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Header / Top Bar */}
           <header className="h-16 bg-white shadow-sm border-b border-gray-200 flex items-center px-6 z-10">
-            {/* You can put breadcrumbs or user profile here */}
             <div className="text-sm text-gray-500">
               Dashboard /{" "}
               <span className="font-medium text-gray-800">{activeId}</span>

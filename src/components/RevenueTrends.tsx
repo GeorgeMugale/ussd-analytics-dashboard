@@ -67,7 +67,7 @@ type ChartType = "stacked" | "grouped" | "line" | "area";
 // Define the shape of our dynamic insight cards
 interface InsightCard {
   title: string;
-  value: string; // The main stat (e.g., "Electricity")
+  value: string; // The main stat (example: "Electricity")
   description: string;
   icon: React.ElementType;
   colorClass: string; // e.g., "bg-blue-50 border-blue-200"
@@ -196,7 +196,7 @@ const USSDRevenueTrends: React.FC = () => {
       }),
       isPeak,
       isHoliday,
-      isProjected: false, // You can set this to true if date === today
+      isProjected: false,
       growth: Math.round(growth * 10) / 10,
     };
   };
