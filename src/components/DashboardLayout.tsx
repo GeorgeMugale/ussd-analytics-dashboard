@@ -8,9 +8,9 @@ import React, {
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronDown,
-  LayoutDashboard,
   ChevronsLeft,
   ChevronsRight,
+  LayoutDashboard,
 } from "lucide-react";
 
 // --- Context Definitions ---
@@ -85,12 +85,19 @@ export const DashboardItem: React.FC<DashboardItemProps> = ({
       onClick={() => setActiveId(id)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`relative w-full flex items-center p-3 rounded-lg my-1 transition-all duration-200 ${
+      className={`relative w-full flex items-center p-3 my-1 transition-all duration-200 rounded-xl ${
         isActive
-          ? "bg-blue-100 text-blue-800"
-          : "text-gray-600 hover:bg-gray-100"
+          ? "text-gray-900 font-semibold bg-gray-100"
+          : "text-gray-500 hover:bg-gray-100/60"
       } ${isCollapsed ? "justify-center" : ""}`}
     >
+      {isActive && (
+        <motion.div
+          layoutId="active-indicator"
+          className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-blue-600 rounded-r"
+        />
+      )}
+
       <span className={`text-lg flex-shrink-0 ${isCollapsed ? "" : "mr-3"}`}>
         {icon}
       </span>
@@ -237,8 +244,12 @@ const ActiveContentRenderer = ({ children }: { children: ReactNode }) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">{title}</h2>
-        {description && <p className="text-gray-500 mb-6">{description}</p>}
+        {description && (
+          <>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">{title}</h2>
+            {description && <p className="text-gray-500 mb-6">{description}</p>}
+          </>
+        )}
         <div className="mt-6">{itemChildren}</div>
       </motion.div>
     </div>
@@ -249,12 +260,14 @@ export type DashboardProps = {
   title: string;
   children: ReactNode;
   defaultActiveId?: string;
+  onSetActive?: (id: string) => Promise<void> | void;
 };
 
 export default function Dashboard({
   title,
   children,
   defaultActiveId,
+  onSetActive,
 }: DashboardProps) {
   const getFirstId = (nodes: ReactNode): string | null => {
     let foundId: string | null = null;
@@ -277,7 +290,15 @@ export default function Dashboard({
 
   return (
     <DashboardContext.Provider
-      value={{ activeId, setActiveId, isCollapsed, setIsCollapsed }}
+      value={{
+        activeId,
+        setActiveId: (id: string) => {
+          setActiveId(id);
+          onSetActive?.(id);
+        },
+        isCollapsed,
+        setIsCollapsed,
+      }}
     >
       <div className="flex h-screen bg-gray-50 overflow-hidden">
         {/* Sidebar */}
@@ -291,20 +312,20 @@ export default function Dashboard({
           <div
             className={`h-16 flex items-center ${
               isCollapsed ? "justify-center" : "px-6"
-            } border-b border-gray-100 bg-blue-700 transition-all`}
+            } border-b border-gray-100 bg-white`}
           >
             {!isCollapsed ? (
-              <h1 className="text-white font-bold text-lg tracking-wide truncate">
+              <h1 className="text-gray-800 font-bold text-xl tracking-tight truncate">
                 {title}
               </h1>
             ) : (
-              <h1 className="text-white font-bold text-lg">
+              <h1 className="text-gray-800 font-bold text-xl">
                 {title.charAt(0)}
               </h1>
             )}
           </div>
 
-          <nav className="flex-1 overflow-y-auto p-4 custom-scrollbar overflow-x-hidden">
+          <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar overflow-x-hidden">
             {children}
           </nav>
 
@@ -337,7 +358,7 @@ export default function Dashboard({
           </header>
 
           {/* Main Content Scrollable Area */}
-          <main className="flex-1 overflow-auto p-6 bg-slate-50/50">
+          <main className="flex-1 overflow-auto p-6 bg-gray-50">
             <ActiveContentRenderer>{children}</ActiveContentRenderer>
           </main>
         </div>

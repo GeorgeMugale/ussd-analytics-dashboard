@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, RefObject, useRef } from "react";
 import {
   LineChart,
   Line,
@@ -26,12 +26,21 @@ import {
   Zap,
   Activity,
   DollarSign,
+  FileText,
+  File,
+  X,
 } from "lucide-react";
 import { api } from "../services/api";
+import {
+  CustomTooltipProps,
+  exportAsCSV,
+  exportAsPDF,
+  showExportDialog,
+  TimeRange,
+} from "./utils";
+import LoaderOverlay from "./LoaderOverlay";
 
 // Type definitions
-// types.ts
-
 export interface ChartDataPoint {
   date: string; // formatted label (e.g., "10:00" or "Oct 24")
   fullDate: string; // ISO string for sorting/logic
@@ -67,22 +76,11 @@ interface SummaryMetrics {
   growthRate: number;
 }
 
-export interface CustomTooltipProps<T> extends TooltipProps<number, string> {
-  active?: boolean;
-  payload?: Array<{
-    payload: T;
-  }>;
-  label?: string;
-}
-
-export type TimeRange = "24h" | "7d" | "30d" | "90d";
 type ChartType = "area" | "line" | "bar" | "composed";
-type ViewMode = "daily" | "hourly";
 
 const TransactionVolumeChart: React.FC = () => {
   const [timeRange, setTimeRange] = useState<TimeRange>("90d");
   const [chartType, setChartType] = useState<ChartType>("area");
-  const [viewMode, setViewMode] = useState<ViewMode>("daily");
   const [selectedService, setSelectedService] = useState<string>("all");
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [summaryMetrics, setSummaryMetrics] = useState<SummaryMetrics>({
@@ -94,6 +92,9 @@ const TransactionVolumeChart: React.FC = () => {
     successRate: 0,
     growthRate: 0,
   });
+  const [isLoading, setIsLoading] = useState(true);
+
+  const componentRef = useRef<HTMLDivElement>(null);
 
   const ussdServices = [
     {
@@ -133,107 +134,6 @@ const TransactionVolumeChart: React.FC = () => {
       gradient: ["#6366F1", "#4F46E5"],
     },
   ];
-
-  // Generate realistic data with trends
-  const generateData = (): ChartDataPoint[] => {
-    const data: ChartDataPoint[] = [];
-    const now = new Date();
-
-    const days =
-      timeRange === "24h"
-        ? 1
-        : timeRange === "7d"
-        ? 7
-        : timeRange === "30d"
-        ? 30
-        : 90;
-    const isHourly = timeRange === "24h";
-    const points = isHourly ? 24 : days;
-
-    for (let i = points; i >= 0; i--) {
-      const date = new Date(now);
-
-      if (isHourly) {
-        date.setHours(date.getHours() - i);
-      } else {
-        date.setDate(date.getDate() - i);
-      }
-
-      const dayOfWeek = date.getDay();
-      const hour = date.getHours();
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-      const dayOfMonth = date.getDate();
-
-      // Base volume with realistic patterns
-      let baseVolume = 3000;
-
-      // Time-based patterns
-      if (isHourly) {
-        // Hourly patterns: low at night, peaks at 10am and 7pm
-        if (hour >= 0 && hour < 6) baseVolume *= 0.3;
-        else if (hour >= 6 && hour < 9) baseVolume *= 0.7;
-        else if (hour >= 9 && hour < 12) baseVolume *= 1.5;
-        else if (hour >= 12 && hour < 14) baseVolume *= 1.3;
-        else if (hour >= 14 && hour < 17) baseVolume *= 1.1;
-        else if (hour >= 17 && hour < 20) baseVolume *= 1.6;
-        else baseVolume *= 0.8;
-      } else {
-        if (!isWeekend) baseVolume += 2000;
-        if (dayOfMonth === 1 || dayOfMonth === 15 || dayOfMonth === 30)
-          baseVolume += 3000;
-      }
-
-      // Growth trend over time
-      const growthFactor = 1 + ((points - i) / points) * 0.15;
-      baseVolume *= growthFactor;
-
-      // Seasonal patterns
-      const month = date.getMonth();
-      if (month >= 9 && month <= 11) baseVolume *= 1.2; // Hot season
-      if (month >= 0 && month <= 2) baseVolume *= 0.9; // Rainy season
-
-      // Random variation
-      baseVolume += (Math.random() - 0.5) * baseVolume * 0.2;
-
-      const electricity = Math.floor(baseVolume * 0.35);
-      const water = Math.floor(baseVolume * 0.25);
-      const airtime = Math.floor(baseVolume * 0.2);
-      const mobileMoney = Math.floor(baseVolume * 0.15);
-      const banking = Math.floor(baseVolume * 0.05);
-
-      const total = electricity + water + airtime + mobileMoney + banking;
-      const successRate = 87 + Math.random() * 8;
-      const failedTransactions = Math.floor(total * (1 - successRate / 100));
-
-      data.push({
-        date: isHourly
-          ? date.toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-          : date.toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            }),
-        fullDate: date.toISOString(),
-        dayOfWeek: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][dayOfWeek],
-        hour: isHourly ? hour : undefined,
-        total,
-        electricity,
-        water,
-        airtime,
-        mobileMoney,
-        banking,
-        avgSessionTime: Math.floor(Math.random() * 90) + 45,
-        successRate,
-        revenue: total * 0.15 + Math.random() * 50,
-        failedTransactions,
-        peakConcurrentUsers: Math.floor(total * 0.15 + Math.random() * 100),
-      });
-    }
-
-    return data;
-  };
 
   const calculateMetrics = (data: ChartDataPoint[]): SummaryMetrics => {
     if (data.length === 0) {
@@ -293,6 +193,8 @@ const TransactionVolumeChart: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
+
       try {
         const response = await api.getTransactionVolume(
           timeRange,
@@ -300,13 +202,14 @@ const TransactionVolumeChart: React.FC = () => {
         );
         const rawData: ChartDataPoint[] = response;
 
-        // Set the data directly to state
         setChartData(rawData);
 
         // Recalculate metrics using existing client-side function
         setSummaryMetrics(calculateMetrics(rawData));
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -323,14 +226,10 @@ const TransactionVolumeChart: React.FC = () => {
 
       return (
         <div className="bg-gradient-to-br from-white to-gray-50   p-4 rounded-xl shadow-2xl border border-gray-200  backdrop-blur-sm">
-          <p className="font-bold text-gray-900  text-base mb-3">
-            {label}
-          </p>
+          <p className="font-bold text-gray-900  text-base mb-3">{label}</p>
           <div className="space-y-2">
             <div className="flex justify-between items-center gap-8 pb-2 border-b border-gray-200 ">
-              <span className="text-gray-600 font-medium">
-                Total:
-              </span>
+              <span className="text-gray-600 font-medium">Total:</span>
               <span className="font-bold text-xl bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 {data.total?.toLocaleString()}
               </span>
@@ -339,36 +238,28 @@ const TransactionVolumeChart: React.FC = () => {
             <div className="grid grid-cols-2 gap-2 py-2">
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                <span className="text-xs text-gray-600 ">
-                  Electricity:
-                </span>
+                <span className="text-xs text-gray-600 ">Electricity:</span>
                 <span className="text-xs font-semibold text-gray-900  ml-auto">
                   {data.electricity?.toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
-                <span className="text-xs text-gray-600 ">
-                  Mobile:
-                </span>
+                <span className="text-xs text-gray-600 ">Mobile:</span>
                 <span className="text-xs font-semibold text-gray-900  ml-auto">
                   {data.mobileMoney?.toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />
-                <span className="text-xs text-gray-600 ">
-                  Airtime:
-                </span>
+                <span className="text-xs text-gray-600 ">Airtime:</span>
                 <span className="text-xs font-semibold text-gray-900  ml-auto">
                   {data.airtime?.toLocaleString()}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
-                <span className="text-xs text-gray-600 ">
-                  Water:
-                </span>
+                <span className="text-xs text-gray-600 ">Water:</span>
                 <span className="text-xs font-semibold text-gray-900  ml-auto">
                   {data.water?.toLocaleString()}
                 </span>
@@ -377,9 +268,7 @@ const TransactionVolumeChart: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-200 ">
               <div>
-                <span className="text-xs text-gray-500 ">
-                  Success Rate
-                </span>
+                <span className="text-xs text-gray-500 ">Success Rate</span>
                 <div className="flex items-center gap-1 mt-1">
                   <div className="w-full bg-gray-200  rounded-full h-1.5">
                     <div
@@ -393,9 +282,7 @@ const TransactionVolumeChart: React.FC = () => {
                 </div>
               </div>
               <div>
-                <span className="text-xs text-gray-500 ">
-                  Revenue
-                </span>
+                <span className="text-xs text-gray-500 ">Revenue</span>
                 <p className="text-sm font-bold text-gray-900  mt-1">
                   ZMW {data.revenue?.toFixed(0)}
                 </p>
@@ -673,7 +560,12 @@ const TransactionVolumeChart: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100   p-6">
+    <div
+      ref={componentRef}
+      className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100   p-6"
+    >
+      <LoaderOverlay isLoading={isLoading} />
+
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="bg-white  rounded-2xl shadow-xl p-6 border border-gray-200 ">
@@ -715,7 +607,29 @@ const TransactionVolumeChart: React.FC = () => {
                 <option value="composed">Composed</option>
               </select>
 
-              <button className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl font-medium">
+              <button
+                onClick={() =>
+                  showExportDialog(
+                    () => exportAsPDF("transaction-volumes", componentRef),
+                    () =>
+                      exportAsCSV<ChartDataPoint>(
+                        chartData,
+                        "ussd-transaction-volumes",
+                        [
+                          { key: "date", label: "Date" },
+                          { key: "total", label: "Total Transactions" },
+                          { key: "electricity", label: "Electricity" },
+                          { key: "mobileMoney", label: "Mobile Money" },
+                          { key: "airtime", label: "Airtime" },
+                          { key: "water", label: "Water" },
+                          { key: "successRate", label: "Success Rate (%)" },
+                          { key: "revenue", label: "Revenue (ZMW)" },
+                        ]
+                      )
+                  )
+                }
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl font-medium"
+              >
                 <Download className="w-4 h-4" />
                 Export
               </button>
@@ -849,25 +763,19 @@ const TransactionVolumeChart: React.FC = () => {
             </h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 bg-gray-50 /50 rounded-xl">
-                <span className="text-sm text-gray-600 ">
-                  Peak Period
-                </span>
+                <span className="text-sm text-gray-600 ">Peak Period</span>
                 <span className="font-bold text-gray-900 ">
                   {summaryMetrics.peakDay.date}
                 </span>
               </div>
               <div className="flex items-center justify-between p-3 bg-gray-50 /50 rounded-xl">
-                <span className="text-sm text-gray-600 ">
-                  Peak Volume
-                </span>
+                <span className="text-sm text-gray-600 ">Peak Volume</span>
                 <span className="font-bold text-gray-900 ">
                   {formatYAxis(summaryMetrics.peakDay.value)}
                 </span>
               </div>
               <div className="flex items-center justify-between p-3 bg-gray-50 /50 rounded-xl">
-                <span className="text-sm text-gray-600 ">
-                  Daily Average
-                </span>
+                <span className="text-sm text-gray-600 ">Daily Average</span>
                 <span className="font-bold text-gray-900 ">
                   {formatYAxis(summaryMetrics.avgTransactions)}
                 </span>

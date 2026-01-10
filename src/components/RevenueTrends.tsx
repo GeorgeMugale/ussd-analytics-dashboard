@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   BarChart,
   Bar,
@@ -12,7 +12,6 @@ import {
   Line,
   Area,
   AreaChart,
-  TooltipProps,
 } from "recharts";
 import {
   TrendingUp,
@@ -21,28 +20,34 @@ import {
   DollarSign,
   Activity,
   Download,
-  RefreshCw,
   AlertCircle,
   Wallet,
   Smartphone,
   Droplet,
   Signal,
 } from "lucide-react";
-import { CustomTooltipProps } from "./TransactionVolumeChart";
+import {
+  CustomTooltipProps,
+  exportAsCSV,
+  exportAsPDF,
+  showExportDialog,
+  TimeRange,
+} from "./utils";
 import { api } from "../services/api";
+import LoaderOverlay from "./LoaderOverlay";
 
 interface RevenueDataPoint {
-  date: string;       // ISO String from backend
-  dateLabel: string;  // Generated in Frontend
+  date: string; // ISO String from backend
+  dateLabel: string; // Generated in Frontend
   electricity: number;
   mobileMoney: number;
   airtime: number;
   water: number;
   total: number;
-  isPeak: boolean;    // Calculated in Frontend
+  isPeak: boolean; // Calculated in Frontend
   isHoliday: boolean; // Calculated in Frontend
   isProjected: boolean;
-  growth?: number;    // Calculated in Frontend
+  growth?: number; // Calculated in Frontend
 }
 
 interface ServiceRevenue {
@@ -57,14 +62,113 @@ interface ServiceRevenue {
   trend: number;
 }
 
-type TimeRange = "7d" | "30d" | "90d" | "ytd";
 type ChartType = "stacked" | "grouped" | "line" | "area";
 
+// Define the shape of our dynamic insight cards
+interface InsightCard {
+  title: string;
+  value: string; // The main stat (e.g., "Electricity")
+  description: string;
+  icon: React.ElementType;
+  colorClass: string; // e.g., "bg-blue-50 border-blue-200"
+  iconBgClass: string; // e.g., "bg-blue-500"
+}
+
+// 1. Helper to calculate Service Stats dynamically
+const calculateServiceStats = (data: RevenueDataPoint[]): ServiceRevenue[] => {
+  if (data.length === 0) return [];
+
+  const totalRev = data.reduce((sum, d) => sum + d.total, 0);
+
+  // Define metadata for services to preserve colors/icons
+  const serviceMeta: Record<string, any> = {
+    electricity: { name: "Electricity Tokens", color: "#3B82F6", icon: Zap },
+    mobileMoney: { name: "Mobile Money", color: "#10B981", icon: Wallet },
+    airtime: { name: "Airtime Sales", color: "#8B5CF6", icon: Smartphone },
+    water: { name: "Water Bills", color: "#F59E0B", icon: Droplet },
+  };
+
+  return Object.keys(serviceMeta)
+    .map((key) => {
+      const meta = serviceMeta[key];
+      const serviceTotal = data.reduce((sum, d) => sum + (d as any)[key], 0);
+
+      // Calculate Trend (Simple logic: Last 3 days avg vs First 3 days avg)
+      const startAvg =
+        data.slice(0, 3).reduce((s, d) => s + (d as any)[key], 0) / 3 || 1;
+      const endAvg =
+        data.slice(-3).reduce((s, d) => s + (d as any)[key], 0) / 3 || 1;
+      const trend = ((endAvg - startAvg) / startAvg) * 100;
+
+      return {
+        name: meta.name,
+        value: serviceTotal,
+        color: meta.color,
+        icon: meta.icon,
+        percentage: Math.round((serviceTotal / totalRev) * 100),
+        trend: Math.round(trend * 10) / 10,
+      };
+    })
+    .sort((a, b) => b.value - a.value); // Sort by highest revenue
+};
+
+// 2. Helper to generate Text Insights dynamically
+const generateRevenueInsights = (
+  data: RevenueDataPoint[],
+  services: ServiceRevenue[]
+): InsightCard[] => {
+  if (data.length === 0 || services.length === 0) return [];
+
+  // Insight A: Dominant Service
+  const dominant = services[0]; // Already sorted by value in helper above
+
+  // Insight B: Growth Star (Highest positive trend)
+  const growthStar = [...services].sort((a, b) => b.trend - a.trend)[0];
+
+  // Insight C: Salary Week Impact
+  // Calculate total revenue during "Peak" days (15th-20th) vs Total
+  const salaryWeekRev = data
+    .filter((d) => d.isPeak)
+    .reduce((sum, d) => sum + d.total, 0);
+  const totalRev = data.reduce((sum, d) => sum + d.total, 0);
+  const salaryWeekShare = Math.round((salaryWeekRev / totalRev) * 100);
+
+  return [
+    {
+      title: "Market Dominance",
+      value: dominant.name,
+      description: `${dominant.name} contributes ${dominant.percentage}% of total revenue. Urban uptake is driving this volume.`,
+      icon: dominant.icon,
+      colorClass: "bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200",
+      iconBgClass: "bg-blue-500",
+    },
+    {
+      title: "Fastest Growth",
+      value: `${growthStar.name} (+${growthStar.trend}%)`,
+      description: `Highest growth trend observed. Adoption in Lusaka and Copperbelt is increasing daily volumes.`,
+      icon: TrendingUp,
+      colorClass:
+        "bg-gradient-to-br from-green-50 to-emerald-50 border-green-200",
+      iconBgClass: "bg-green-500",
+    },
+    {
+      title: "Salary Week Impact",
+      value: `${salaryWeekShare}% of Volume`,
+      description: `Days 15-20 (Salary Week) account for ${salaryWeekShare}% of total monthly revenue flows.`,
+      icon: Signal,
+      colorClass:
+        "bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200",
+      iconBgClass: "bg-purple-500",
+    },
+  ];
+};
+
 const USSDRevenueTrends: React.FC = () => {
-  const [timeRange, setTimeRange] = useState<TimeRange>("30d");
+  const [timeRange, setTimeRange] = useState<TimeRange>("90d");
   const [chartType, setChartType] = useState<ChartType>("stacked");
   const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([]);
   const [loading, setLoading] = useState(false); // Add loading state if desired
+  const componentRef = useRef<HTMLDivElement>(null);
 
   // Helper to detect specific business days (Moved from generate function)
   const enhanceDataPoint = (data: any, prevTotal: number) => {
@@ -81,9 +185,8 @@ const USSDRevenueTrends: React.FC = () => {
       (month === 0 && dayOfMonth === 1);
 
     // Logic: Growth % vs previous day
-    const growth = prevTotal > 0 
-      ? ((data.total - prevTotal) / prevTotal) * 100 
-      : 0;
+    const growth =
+      prevTotal > 0 ? ((data.total - prevTotal) / prevTotal) * 100 : 0;
 
     return {
       ...data,
@@ -98,25 +201,26 @@ const USSDRevenueTrends: React.FC = () => {
     };
   };
 
-
- useEffect(() => {
+  useEffect(() => {
     const fetchRevenueData = async () => {
       setLoading(true);
       try {
         const result = await api.getRevenueTrends(timeRange);
-		
-		if (result){
 
-        // Process the raw data to add UI flags (Growth, Peak, etc.)
-        const processedData: RevenueDataPoint[] = result.map((item: any, index: number) => {
-          const prevTotal = index > 0 ? result[index - 1].total : item.total;
-          return enhanceDataPoint(item, prevTotal);
-        });
+        if (result) {
+          // Process the raw data to add UI flags (Growth, Peak, etc.)
+          const processedData: RevenueDataPoint[] = result.map(
+            (item: any, index: number) => {
+              const prevTotal =
+                index > 0 ? result[index - 1].total : item.total;
+              return enhanceDataPoint(item, prevTotal);
+            }
+          );
 
-        setRevenueData(processedData);
-		}else{
-			alert("Error fetching");
-		}
+          setRevenueData(processedData);
+        } else {
+          alert("Error fetching");
+        }
       } catch (error) {
         console.error("Failed to fetch revenue data", error);
       } finally {
@@ -133,41 +237,6 @@ const USSDRevenueTrends: React.FC = () => {
     (max, d) => (d.total > max.total ? d : max),
     revenueData[0] || { total: 0, dateLabel: "" }
   );
-
-  const serviceRevenues: ServiceRevenue[] = [
-    {
-      name: "Electricity Tokens",
-      value: revenueData.reduce((sum, d) => sum + d.electricity, 0),
-      color: "#3B82F6",
-      icon: Zap,
-      percentage: 45,
-      trend: 8.5,
-    },
-    {
-      name: "Mobile Money",
-      value: revenueData.reduce((sum, d) => sum + d.mobileMoney, 0),
-      color: "#10B981",
-      icon: Wallet,
-      percentage: 30,
-      trend: 12.3,
-    },
-    {
-      name: "Airtime Sales",
-      value: revenueData.reduce((sum, d) => sum + d.airtime, 0),
-      color: "#8B5CF6",
-      icon: Smartphone,
-      percentage: 15,
-      trend: -2.1,
-    },
-    {
-      name: "Water Bills",
-      value: revenueData.reduce((sum, d) => sum + d.water, 0),
-      color: "#F59E0B",
-      icon: Droplet,
-      percentage: 10,
-      trend: 5.2,
-    },
-  ];
 
   const overallTrend =
     revenueData.length > 1
@@ -207,9 +276,7 @@ const USSDRevenueTrends: React.FC = () => {
 
           <div className="space-y-2">
             <div className="flex justify-between items-center pb-2 border-b border-gray-200 ">
-              <span className="text-gray-600 font-medium">
-                Total Revenue:
-              </span>
+              <span className="text-gray-600 font-medium">Total Revenue:</span>
               <span className="font-bold text-lg text-gray-900 ">
                 ZMW {data.total.toLocaleString()}
               </span>
@@ -222,9 +289,7 @@ const USSDRevenueTrends: React.FC = () => {
                     className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: entry.color }}
                   />
-                  <span className="text-sm text-gray-600 ">
-                    {entry.name}:
-                  </span>
+                  <span className="text-sm text-gray-600 ">{entry.name}:</span>
                 </div>
                 <span className="text-sm font-semibold text-gray-900 ">
                   ZMW {entry.value.toLocaleString()}
@@ -500,8 +565,22 @@ const USSDRevenueTrends: React.FC = () => {
     }
   };
 
+  const serviceRevenues = React.useMemo(
+    () => calculateServiceStats(revenueData),
+    [revenueData]
+  );
+  const insights = React.useMemo(
+    () => generateRevenueInsights(revenueData, serviceRevenues),
+    [revenueData, serviceRevenues]
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50   p-6">
+    <div
+      ref={componentRef}
+      className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50   p-6"
+    >
+      <LoaderOverlay isLoading={loading} />
+
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="bg-white  rounded-2xl shadow-xl p-6 border border-gray-200 ">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
@@ -525,20 +604,41 @@ const USSDRevenueTrends: React.FC = () => {
                 <TrendingUp className="w-4 h-4" />+{overallTrend.toFixed(1)}%
                 growth
               </div>
-              <button className="p-2 hover:bg-gray-100  rounded-xl transition-colors">
-                <RefreshCw className="w-5 h-5 text-gray-600 " />
-              </button>
-              <button className="p-2 hover:bg-gray-100  rounded-xl transition-colors">
-                <Download className="w-5 h-5 text-gray-600 " />
+
+              <button
+                onClick={() =>
+                  showExportDialog(
+                    () => exportAsPDF("transaction-volumes", componentRef),
+                    () =>
+                      exportAsCSV(revenueData, "ussd-revenue-trends", [
+                        { key: "date", label: "Date" },
+                        { key: "dateLabel", label: "Date Label" },
+                        {
+                          key: "electricity",
+                          label: "Electricity Revenue (ZMW)",
+                        },
+                        {
+                          key: "mobileMoney",
+                          label: "Mobile Money Revenue (ZMW)",
+                        },
+                        { key: "airtime", label: "Airtime Revenue (ZMW)" },
+                        { key: "water", label: "Water Revenue (ZMW)" },
+                        { key: "total", label: "Total Revenue (ZMW)" },
+                        { key: "growth", label: "Growth (%)" },
+                      ])
+                  )
+                }
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl font-medium"
+              >
+                <Download className="w-4 h-4" />
+                Export
               </button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50   p-4 rounded-xl border border-blue-200 ">
-              <div className="text-sm text-gray-600  mb-1">
-                Total Revenue
-              </div>
+              <div className="text-sm text-gray-600  mb-1">Total Revenue</div>
               <div className="text-3xl font-bold text-gray-900 ">
                 ZMW {formatYAxis(totalRevenue)}
               </div>
@@ -555,9 +655,7 @@ const USSDRevenueTrends: React.FC = () => {
             </div>
 
             <div className="bg-gradient-to-br from-green-50 to-emerald-50   p-4 rounded-xl border border-green-200 ">
-              <div className="text-sm text-gray-600  mb-1">
-                Avg. Daily
-              </div>
+              <div className="text-sm text-gray-600  mb-1">Avg. Daily</div>
               <div className="text-3xl font-bold text-gray-900 ">
                 ZMW {avgDailyRevenue.toLocaleString()}
               </div>
@@ -567,9 +665,7 @@ const USSDRevenueTrends: React.FC = () => {
             </div>
 
             <div className="bg-gradient-to-br from-purple-50 to-pink-50   rounded-xl border border-purple-200 ">
-              <div className="text-sm text-gray-600  mb-1">
-                Peak Day
-              </div>
+              <div className="text-sm text-gray-600  mb-1">Peak Day</div>
               <div className="text-3xl font-bold text-gray-900 ">
                 ZMW {peakDay.total.toLocaleString()}
               </div>
@@ -671,9 +767,7 @@ const USSDRevenueTrends: React.FC = () => {
                   </div>
 
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500 ">
-                      Share:
-                    </span>
+                    <span className="text-gray-500 ">Share:</span>
                     <span
                       className="font-bold"
                       style={{ color: service.color }}
@@ -697,66 +791,36 @@ const USSDRevenueTrends: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white  rounded-2xl shadow-xl p-6 border border-gray-200 ">
-          <h2 className="text-xl font-bold text-gray-900  mb-6 flex items-center gap-2">
+        {/* Dynamic Revenue Insights */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-200">
+          <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-purple-600" />
             Revenue Insights
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50   p-5 rounded-xl border border-blue-200 ">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-white" />
+            {insights.map((insight, index) => (
+              <div
+                key={index}
+                className={`${insight.colorClass} p-5 rounded-xl border`}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div
+                    className={`w-10 h-10 rounded-full ${insight.iconBgClass} flex items-center justify-center`}
+                  >
+                    <insight.icon className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="text-lg font-bold text-gray-900 leading-tight">
+                    {insight.title}
+                  </div>
                 </div>
-                <div className="text-lg font-bold text-gray-900 ">
-                  Electricity Dominance
+                <div className="font-semibold text-gray-900 mb-1">
+                  {insight.value}
                 </div>
+                <p className="text-sm text-gray-600">{insight.description}</p>
               </div>
-              <p className="text-sm text-gray-600 ">
-                Highest revenue contributor at 45%, peaks during salary weeks
-                (15th-20th). Urban areas show 60% higher usage.
-              </p>
-            </div>
-
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50   p-5 rounded-xl border border-green-200 ">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
-                  <Wallet className="w-5 h-5 text-white" />
-                </div>
-                <div className="text-lg font-bold text-gray-900 ">
-                  Mobile Money Growth
-                </div>
-              </div>
-              <p className="text-sm text-gray-600 ">
-                Steady 12.3% growth trend. Highest adoption in Lusaka (48%) and
-                Copperbelt (35%). Weekend usage increased 20%.
-              </p>
-            </div>
-
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50   p-5 rounded-xl border border-purple-200 ">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center">
-                  <Signal className="w-5 h-5 text-white" />
-                </div>
-                <div className="text-lg font-bold text-gray-900 ">
-                  Network Performance
-                </div>
-              </div>
-              <p className="text-sm text-gray-600 ">
-                MTN leads with 48% revenue share, followed by Airtel at 42% and
-                Zamtel at 10%. Strong urban penetration.
-              </p>
-            </div>
+            ))}
           </div>
-        </div>
-
-        <div className="text-center text-gray-500  text-sm space-y-1 pb-4">
-          <p>USSD Revenue Analytics Dashboard for Zambian Telecommunications</p>
-          <p className="text-xs">
-            Peak revenue observed during salary weeks • Electricity tokens
-            dominate at 45% of total revenue
-          </p>
         </div>
       </div>
     </div>

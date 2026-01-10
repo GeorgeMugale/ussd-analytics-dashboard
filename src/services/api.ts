@@ -1,7 +1,12 @@
-import { TimeRange } from "../components/TransactionVolumeChart";
+import { TimeRange } from "../components/utils";
 
 const API_BASE = "http://localhost:3000/api/analytics"; // Node.js backend
 
+/**
+ * Utility to fetch from node.js api end points
+ * @param path the path for the endpoint
+ * @param [options={}] any options for fetching, (not needed for this demo because there are only get requests and there is no auth)
+ */
 async function request(path: string, options: any = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
     headers: {
@@ -15,11 +20,11 @@ async function request(path: string, options: any = {}) {
     const err = await res.text();
     throw new Error(err || "API request failed");
   }
-  
+
   const response: any = await res.json();
-  
-  if (response.success){
-	  return response.payload;
+
+  if (response.success) {
+    return response.payload;
   }
 
   return null;
@@ -29,10 +34,12 @@ async function request(path: string, options: any = {}) {
 export const api = {
   getTransactionVolume: (range: TimeRange, service: string) =>
     request(`/transactions/volume/${range}/${service}`),
-  getSuccessRate: (selectedPeriod: TimeRange) => request(`/transactions/success-rate/${selectedPeriod}`),
+  getSuccessRate: (selectedPeriod: TimeRange) =>
+    request(`/transactions/success-rate/${selectedPeriod}`),
   getPeakHours: () => request("/peak-hours"),
   getDemographics: () => request("/users/demographics"),
-  getRevenueTrends: (range: TimeRange | "ytd") => request(`/revenue/trends/${range}`),
+  getRevenueTrends: (range: TimeRange | "ytd") =>
+    request(`/revenue/trends/${range}`),
   getMenuNavigationFlow: () => request("/menu-flow"),
   getReport: (type: string | number) => request(`/reports/${type}`),
 };

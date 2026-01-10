@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Activity,
   Signal,
   Clock,
   Users,
   MapPin,
-  TrendingUp,
-  TrendingDown,
   Zap,
   CheckCircle,
   XCircle,
@@ -18,6 +16,8 @@ import {
 } from "lucide-react";
 import { api } from "../services/api";
 import { LoaderCircle } from "lucide-react";
+import { exportAsCSV, exportAsPDF, showExportDialog, TimeRange } from "./utils";
+import LoaderOverlay from "./LoaderOverlay";
 
 interface NetworkStats {
   name: string;
@@ -34,7 +34,6 @@ interface MetricData {
   avgResponseTime: number;
   activeSessions: number;
   topProvince: string;
-  trend: number;
   peakHour: string;
 }
 
@@ -46,7 +45,6 @@ export interface GaugeApiResponse {
     avgResponseTime: number;
     activeSessions: number;
     topProvince: string;
-    trend: number;
     peakHour: string;
   };
   networks: {
@@ -57,7 +55,7 @@ export interface GaugeApiResponse {
   }[];
 }
 
-const USSDGauge: React.FC = () => {
+const SuccessRageGauge: React.FC = () => {
   const [metrics, setMetrics] = useState<MetricData>({
     successRate: 0,
     successfulTxns: 0,
@@ -65,9 +63,11 @@ const USSDGauge: React.FC = () => {
     avgResponseTime: 0,
     activeSessions: 0,
     topProvince: "NA",
-    trend: 0,
     peakHour: "NA",
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const componentRef = useRef<HTMLDivElement>(null);
+  const [networks, setNetworks] = useState<NetworkStats[]>();
 
   const networkColors: Record<string, string> = {
     MTN: "#3B82F6", // Blue
@@ -76,6 +76,8 @@ const USSDGauge: React.FC = () => {
   };
 
   const fetchGaugeData = async () => {
+    setIsLoading(true);
+
     try {
       const result = await api.getSuccessRate(selectedPeriod);
 
@@ -89,47 +91,20 @@ const USSDGauge: React.FC = () => {
           ...n,
           color: networkColors[n.name] || "#6B7280", // Default gray
         }));
+
+        setNetworks(formattedNetworks);
       } else {
         alert("Error fetching");
       }
-
-      // Note: You'll need to update your 'networks' state type or setter
-      // if you haven't defined a setNetworks state yet.
-      // Assuming you convert 'networks' const to state:
-      // setNetworks(formattedNetworks);
     } catch (error) {
       console.error("Failed to fetch gauge stats", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const [isLive, setIsLive] = useState(true);
-  const [selectedPeriod, setSelectedPeriod] = useState<"24h" | "7d" | "30d">(
-    "30d"
-  );
-
-  const networks: NetworkStats[] = [
-    {
-      name: "MTN Zambia",
-      rate: 95.1,
-      color: "#3B82F6",
-      marketShare: 45.5,
-      totalTransactions: 10658,
-    },
-    {
-      name: "Airtel Zambia",
-      rate: 93.8,
-      color: "#8B5CF6",
-      marketShare: 42.0,
-      totalTransactions: 9850,
-    },
-    {
-      name: "Zamtel",
-      rate: 91.5,
-      color: "#F59E0B",
-      marketShare: 12.5,
-      totalTransactions: 2943,
-    },
-  ];
+  const [selectedPeriod, setSelectedPeriod] = useState<TimeRange>("90d");
 
   // Replaces the simulation useEffect
   useEffect(() => {
@@ -204,7 +179,11 @@ const USSDGauge: React.FC = () => {
   const needleRotation = -40 + (metrics.successRate / 100) * 270;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50   p-6">
+    <div
+      ref={componentRef}
+      className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50   p-6"
+    >
+      <LoaderOverlay isLoading={isLoading} />
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="bg-white  rounded-2xl shadow-xl p-6 border border-gray-200 ">
@@ -252,8 +231,31 @@ const USSDGauge: React.FC = () => {
                 {isLive ? "Live" : "Paused"}
               </button>
 
-              <button className="p-2 hover:bg-gray-100  rounded-xl transition-colors">
-                <Download className="w-5 h-5 text-gray-600 " />
+              <button
+                onClick={() => {
+                  showExportDialog(
+                    () => exportAsPDF("transaction-volumes", componentRef),
+                    () =>
+                      exportAsCSV<MetricData>([metrics], "ussd-success-rate", [
+                        { key: "successRate", label: "Success Rate (%)" },
+                        {
+                          key: "successfulTxns",
+                          label: "Successful Transactions",
+                        },
+                        {
+                          key: "avgResponseTime",
+                          label: "Average Response Time",
+                        },
+                        { key: "activeSessions", label: "Active Sessions" },
+                        { key: "topProvince", label: "Top Province" },
+                        { key: "peakHour", label: "Peak Hour" },
+                      ])
+                  );
+                }}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl font-medium"
+              >
+                <Download className="w-4 h-4" />
+                Export
               </button>
             </div>
           </div>
@@ -521,60 +523,65 @@ const USSDGauge: React.FC = () => {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {networks.map((network, index) => (
-              <div
-                key={index}
-                className="relative overflow-hidden bg-gradient-to-br from-gray-50 to-white   p-6 rounded-xl border border-gray-200  hover:shadow-lg transition-all duration-300"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-4 h-4 rounded-full"
-                      style={{ backgroundColor: network.color }}
-                    />
-                    <h3 className="font-bold text-gray-900 ">{network.name}</h3>
+            {networks &&
+              networks.map((network, index) => (
+                <div
+                  key={index}
+                  className="relative overflow-hidden bg-gradient-to-br from-gray-50 to-white   p-6 rounded-xl border border-gray-200  hover:shadow-lg transition-all duration-300"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-4 h-4 rounded-full"
+                        style={{ backgroundColor: network.color }}
+                      />
+                      <h3 className="font-bold text-gray-900 ">
+                        {network.name}
+                      </h3>
+                    </div>
+                    <Signal className="w-5 h-5 text-gray-400" />
                   </div>
-                  <Signal className="w-5 h-5 text-gray-400" />
-                </div>
 
-                <div className="mb-4">
-                  <div className="flex items-baseline gap-2 mb-2">
-                    <span className="text-4xl font-bold text-gray-900 ">
-                      {network.rate}%
-                    </span>
-                    <span className="text-sm text-gray-500">success rate</span>
+                  <div className="mb-4">
+                    <div className="flex items-baseline gap-2 mb-2">
+                      <span className="text-4xl font-bold text-gray-900 ">
+                        {network.rate}%
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        success rate
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200  rounded-full h-3">
+                      <div
+                        className="h-3 rounded-full transition-all duration-500"
+                        style={{
+                          width: `${network.rate}%`,
+                          backgroundColor: network.color,
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full bg-gray-200  rounded-full h-3">
-                    <div
-                      className="h-3 rounded-full transition-all duration-500"
-                      style={{
-                        width: `${network.rate}%`,
-                        backgroundColor: network.color,
-                      }}
-                    />
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 ">
-                  <div>
-                    <div className="text-xs text-gray-500  mb-1">
-                      Market Share
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 ">
+                    <div>
+                      <div className="text-xs text-gray-500  mb-1">
+                        Market Share
+                      </div>
+                      <div className="text-lg font-bold text-gray-900 ">
+                        {network.marketShare}%
+                      </div>
                     </div>
-                    <div className="text-lg font-bold text-gray-900 ">
-                      {network.marketShare}%
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500  mb-1">
-                      Transactions
-                    </div>
-                    <div className="text-lg font-bold text-gray-900 ">
-                      {network.totalTransactions?.toLocaleString()}
+                    <div>
+                      <div className="text-xs text-gray-500  mb-1">
+                        Transactions
+                      </div>
+                      <div className="text-lg font-bold text-gray-900 ">
+                        {network.totalTransactions?.toLocaleString()}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
 
@@ -592,4 +599,4 @@ const USSDGauge: React.FC = () => {
   );
 };
 
-export default USSDGauge;
+export default SuccessRageGauge;
